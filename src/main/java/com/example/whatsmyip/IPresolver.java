@@ -14,7 +14,7 @@ import java.util.Optional;
 
 
 @Path("/caller")
-public class HelloResource {
+public class IPresolver {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Optional<MyIp> hello() {
