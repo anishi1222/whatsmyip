@@ -5,6 +5,11 @@ public class MyIp {
     String country;
     String cc;
 
+    public MyIp(String ip, String country, String cc) {
+        this.cc = cc;
+        this.ip = ip;
+        this.country=country;
+    }
     public String getIp() {
         return ip;
     }
