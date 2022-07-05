@@ -1,5 +1,5 @@
 ARG BUILD_IMAGE=maven:3.8.6-eclipse-temurin-17
-ARG RUNTIME_IMAGE=debian:stretch-slim
+ARG RUNTIME_IMAGE=ubuntu:jammy
 
 # ---------------------------------------------------
 # Resolve all maven dependencies
@@ -42,8 +42,8 @@ RUN mvn -B clean package \
 # ---------------------------------------------------
 FROM ${RUNTIME_IMAGE}
 
-RUN mkdir /opt/app
+WORKDIR /helidon
 COPY --from=build /helidon/target/whatsmyip-jri ./
 
 EXPOSE 8080
-ENTRYPOINT ["/bin/bash", "/opt/app/whatsmyip-jri/bin/start"]
+ENTRYPOINT ["/usr/bin/bash", "/helidon/bin/start"]
