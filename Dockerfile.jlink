@@ -1,0 +1,49 @@
+ARG BUILD_IMAGE=maven:3.8.6-eclipse-temurin-17
+ARG RUNTIME_IMAGE=ubuntu:jammy
+
+# ---------------------------------------------------
+# Resolve all maven dependencies
+# ---------------------------------------------------
+FROM ${BUILD_IMAGE} as dependencies
+
+WORKDIR /helidon
+
+#ARG PROXY_SET=false
+#ARG PROXY_HOST=
+#ARG PROXY_PORT=
+
+COPY pom.xml ./
+
+RUN mvn -B dependency:go-offline
+#        -DproxySet=${PROXY_SET} \
+#        -DproxyHost=${PROXY_HOST} \
+#        -DproxyPort=${PROXY_PORT} \
+
+# ---------------------------------------------------
+# Build an artifact
+# ---------------------------------------------------
+FROM dependencies as build
+
+COPY src ./src
+
+RUN mvn -B clean package \
+    -Dmaven.test.skip \
+    -Declipselink.weave.skip \
+    -Pjlink-image \
+    -DskipTests \
+    -Ddocker.build=true \
+    -Djlink.image.addClassDataSharingArchive=false
+#        -DproxySet=${PROXY_SET} \
+#        -DproxyHost=${PROXY_HOST} \
+#        -DproxyPort=${PROXY_PORT} \
+
+# ---------------------------------------------------
+# Build container
+# ---------------------------------------------------
+FROM ${RUNTIME_IMAGE}
+
+WORKDIR /helidon
+COPY --from=build /helidon/target/whatsmyip-jri ./
+
+EXPOSE 8080
+ENTRYPOINT ["/usr/bin/bash", "/helidon/bin/start"]

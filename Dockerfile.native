@@ -1,0 +1,35 @@
+ARG BUILD_IMAGE=ghcr.io/graalvm/native-image:ol8-java17-22.2.0
+ARG RUNTIME_IMAGE=oraclelinux:9-slim
+
+# ---------------------------------------------------
+# Resolve all maven dependencies
+# ---------------------------------------------------
+FROM ${BUILD_IMAGE} as dependencies
+RUN microdnf -y install maven
+WORKDIR /micronaut
+COPY pom.xml ./
+RUN mvn -B dependency:go-offline
+
+# ---------------------------------------------------
+# Build an artifact and create native image
+# ---------------------------------------------------
+FROM dependencies as build
+
+COPY src ./src
+
+RUN mvn -B clean package \
+        -Dpackaging=native-image \
+        -Dmaven.test.skip
+
+# ---------------------------------------------------
+# Build a container image containing native-image
+# ---------------------------------------------------
+
+FROM ${RUNTIME_IMAGE}
+# RUN apk update && apk add libstdc++
+WORKDIR /app
+COPY --from=build /micronaut/target/whatsmyip ./
+
+ENTRYPOINT ["./whatsmyip"]
+
+EXPOSE 8080
